@@ -1,0 +1,10 @@
+Question: When should accessor methods be used?
+Answer: Accessor methods chỉ nên được dùng khi thật sự cần thiết.
+Chúng hữu ích khi một lớp cần cung cấp quyền truy cập có kiểm soát tới dữ liệu bên trong. Tuy nhiên, không nên tạo getter/setter một cách rập khuôn cho mọi thuộc tính.
+Việc lạm dụng getter và setter có thể làm yếu tính đóng gói, giảm tính trừu tượng và khiến đối tượng trở thành nơi chứa dữ liệu đơn thuần thay vì một đối tượng có hành vi rõ ràng.
+Thiết kế tốt hơn là ưu tiên các phương thức thể hiện hành vi nghiệp vụ, ví dụ deposit(), withdraw() hoặc play(), thay vì chỉ show ra trạng thái nội bộ.
+
+Question: If you create a constructor method to build a DVD by title then create a constructor method to build a DVD by category. Does JAVA allow you to do this?
+Answer: Java không cho phép làm điều này.
+Vì cả hai constructor đều chỉ có một tham số kiểu String nên chúng có cùng chữ ký phương thức. Trong Java, nạp chồng constructor chỉ hợp lệ khi danh sách tham số khác nhau về số lượng, kiểu dữ liệu hoặc thứ tự tham số.
+

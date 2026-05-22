@@ -1,0 +1,338 @@
+LAB 04 - ANSWERS
+
+Question 1: Which classes are aggregates of other classes? Checking all constructors of whole classes if they initialize for their parts?
+
+Answer:
+Trong AIMS Project, các quan hệ aggregation/composition chính là:
+
+1. Cart aggregates Media
+- Cart có thuộc tính:
+  private ArrayList<Media> itemsOrdered;
+- Cart chứa nhiều đối tượng Media như Book, DigitalVideoDisc, CompactDisc.
+- Cart không trực tiếp tạo ra các Media này mà chỉ lưu tham chiếu đến chúng, nên đây là aggregation.
+
+2. Store aggregates Media
+- Store có thuộc tính:
+  private ArrayList<Media> itemsInStore;
+- Store chứa danh sách các Media đang có trong cửa hàng.
+- Các Media có thể tồn tại độc lập với Store, nên đây cũng là aggregation.
+
+3. CompactDisc aggregates Track
+- CompactDisc có thuộc tính:
+  private ArrayList<Track> tracks;
+- Một CD gồm nhiều Track.
+- Các Track là thành phần của CD. Trong bài lab, Track được thêm vào CD thông qua addTrack().
+- Constructor của CompactDisc cần khởi tạo danh sách tracks để tránh lỗi NullPointerException.
+
+4. Book aggregates authors
+- Book có thuộc tính:
+  private List<String> authors;
+- Book chứa danh sách tên tác giả.
+- Constructor hoặc khai báo thuộc tính của Book cần khởi tạo authors bằng ArrayList.
+
+Các constructor của whole classes cần đảm bảo khởi tạo các part/list bên trong:
+- Cart phải khởi tạo itemsOrdered = new ArrayList<Media>();
+- Store phải khởi tạo itemsInStore = new ArrayList<Media>();
+- CompactDisc phải khởi tạo tracks = new ArrayList<Track>();
+- Book phải khởi tạo authors = new ArrayList<String>();
+
+Nếu không khởi tạo các danh sách này, khi gọi add(), remove(), contains() sẽ gây lỗi NullPointerException.
+
+
+Question 2: If the passing object is not an instance of Media, what happens?
+
+Answer:
+Nếu object truyền vào phương thức equals(Object obj) không phải là một instance của Media, ta nên trả về false.
+
+Ví dụ:
+
+@Override
+public boolean equals(Object obj) {
+    if (!(obj instanceof Media)) {
+        return false;
+    }
+
+    Media other = (Media) obj;
+    return this.getTitle().equals(other.getTitle());
+}
+
+Giải thích:
+- Vì tham số của equals() có kiểu Object, nên object truyền vào có thể là bất kỳ kiểu nào.
+- Nếu ép kiểu trực tiếp sang Media mà không kiểm tra instanceof, chương trình có thể bị lỗi ClassCastException.
+- Do đó, cần kiểm tra:
+  if (!(obj instanceof Media)) return false;
+- Khi object không phải Media, hai object chắc chắn không được xem là bằng nhau.
+
+
+Question 3: Create an ArrayList of Media, then add some media (CD, DVD or Book) into the list. Iterate through the list and print out the information of the media by using toString() method. Observe what happens and explain in detail.
+
+Answer:
+Khi tạo một ArrayList<Media> và thêm các object thuộc các lớp con như Book, DigitalVideoDisc, CompactDisc vào danh sách, chương trình vẫn lưu được vì các lớp này đều kế thừa từ Media.
+
+Ví dụ:
+
+ArrayList<Media> mediae = new ArrayList<Media>();
+
+mediae.add(cd);
+mediae.add(dvd);
+mediae.add(book);
+
+for (Media m : mediae) {
+    System.out.println(m.toString());
+}
+
+Hiện tượng xảy ra:
+- Biến m có kiểu khai báo là Media.
+- Nhưng object thật sự mà m đang tham chiếu có thể là Book, DigitalVideoDisc hoặc CompactDisc.
+- Khi gọi m.toString(), Java sẽ tự động gọi phiên bản toString() tương ứng với object thật sự tại runtime.
+
+Ví dụ:
+- Nếu m đang trỏ tới Book, chương trình gọi Book.toString().
+- Nếu m đang trỏ tới DigitalVideoDisc, chương trình gọi DigitalVideoDisc.toString().
+- Nếu m đang trỏ tới CompactDisc, chương trình gọi CompactDisc.toString().
+
+Đây là polymorphism ở mức hành vi.
+Cùng một lời gọi m.toString(), nhưng kết quả khác nhau tùy theo kiểu thật sự của object.
+
+Điều này giúp chương trình linh hoạt hơn:
+- Cart và Store chỉ cần làm việc với kiểu chung Media.
+- Không cần viết riêng code in thông tin cho từng loại Book, DVD hay CD.
+- Khi thêm loại Media mới, chỉ cần override toString() trong lớp mới.
+
+
+Question 4: What class should implement the Comparable interface?
+
+Answer:
+Nếu dùng Comparable để so sánh các item trong cart, lớp nên implement Comparable là Media.
+
+Lý do:
+- Cart lưu danh sách theo kiểu ArrayList<Media>.
+- Book, DigitalVideoDisc và CompactDisc đều là subclass của Media.
+- Các thuộc tính dùng để so sánh như title và cost đều nằm trong Media.
+- Vì vậy, đặt compareTo() trong Media là hợp lý nhất.
+
+Ví dụ:
+
+public abstract class Media implements Comparable<Media> {
+    @Override
+    public int compareTo(Media other) {
+        int titleCompare = this.getTitle().compareToIgnoreCase(other.getTitle());
+
+        if (titleCompare != 0) {
+            return titleCompare;
+        }
+
+        return Float.compare(other.getCost(), this.getCost());
+    }
+}
+
+
+Question 5: In those classes, how should you implement the compareTo() method to reflect the ordering that we want?
+
+Answer:
+Nếu muốn sắp xếp theo title trước, sau đó theo cost giảm dần, compareTo() trong Media có thể viết như sau:
+
+@Override
+public int compareTo(Media other) {
+    int titleCompare = this.getTitle().compareToIgnoreCase(other.getTitle());
+
+    if (titleCompare != 0) {
+        return titleCompare;
+    }
+
+    return Float.compare(other.getCost(), this.getCost());
+}
+
+Giải thích:
+- compareTo() trả về số âm nếu object hiện tại đứng trước object còn lại.
+- compareTo() trả về số dương nếu object hiện tại đứng sau object còn lại.
+- compareTo() trả về 0 nếu hai object được xem là bằng nhau theo tiêu chí sắp xếp.
+- Với title, dùng compareToIgnoreCase() để sắp xếp alphabet không phân biệt hoa thường.
+- Nếu title giống nhau, dùng Float.compare(other.getCost(), this.getCost()) để cost cao hơn đứng trước.
+
+Nếu muốn sắp xếp theo cost giảm dần trước, sau đó theo title alphabet, có thể viết:
+
+@Override
+public int compareTo(Media other) {
+    int costCompare = Float.compare(other.getCost(), this.getCost());
+
+    if (costCompare != 0) {
+        return costCompare;
+    }
+
+    return this.getTitle().compareToIgnoreCase(other.getTitle());
+}
+
+
+Question 6: Can we have two ordering rules of the item, by title then cost and by cost then title, if we use this Comparable interface approach?
+
+Answer:
+Không nên dùng Comparable nếu muốn có nhiều hơn một quy tắc sắp xếp.
+
+Lý do:
+- Comparable chỉ định nghĩa một natural ordering duy nhất cho class.
+- Mỗi class chỉ có một phương thức compareTo().
+- Vì vậy, nếu Media implement Comparable, ta chỉ nên chọn một quy tắc sắp xếp mặc định.
+
+Ví dụ:
+- Hoặc sắp xếp theo title rồi cost.
+- Hoặc sắp xếp theo cost rồi title.
+- Không thể đồng thời có hai natural ordering khác nhau bằng Comparable trong cùng một class.
+
+Nếu muốn có nhiều cách sắp xếp khác nhau, nên dùng Comparator.
+Ví dụ:
+- MediaComparatorByTitleCost
+- MediaComparatorByCostTitle
+
+Comparator phù hợp hơn trong bài này vì cart cần hỗ trợ hai lựa chọn sắp xếp:
+- Sort by title
+- Sort by cost
+
+
+Question 7: Suppose the DVDs has a different ordering rule from the other media types, that is by title, then decreasing length, then cost. How would you modify your code to allow this?
+
+Answer:
+Nếu DVD có quy tắc sắp xếp khác với các loại Media khác, cách tốt nhất là dùng Comparator riêng cho DigitalVideoDisc.
+
+Ví dụ:
+
+public class DVDComparatorByTitleLengthCost implements Comparator<DigitalVideoDisc> {
+    @Override
+    public int compare(DigitalVideoDisc dvd1, DigitalVideoDisc dvd2) {
+        int titleCompare = dvd1.getTitle().compareToIgnoreCase(dvd2.getTitle());
+
+        if (titleCompare != 0) {
+            return titleCompare;
+        }
+
+        int lengthCompare = Integer.compare(dvd2.getLength(), dvd1.getLength());
+
+        if (lengthCompare != 0) {
+            return lengthCompare;
+        }
+
+        return Float.compare(dvd1.getCost(), dvd2.getCost());
+    }
+}
+
+Giải thích:
+- Trước hết so sánh title theo alphabet.
+- Nếu title giống nhau, DVD có length lớn hơn sẽ đứng trước.
+- Nếu length cũng giống nhau, tiếp tục so sánh cost.
+
+Nếu danh sách chỉ gồm DVD, có thể dùng:
+Collections.sort(dvdList, new DVDComparatorByTitleLengthCost());
+
+Nếu danh sách là ArrayList<Media> gồm nhiều loại Media khác nhau, có thể viết Comparator<Media> và kiểm tra instanceof:
+
+public class MediaComparatorWithDVDRule implements Comparator<Media> {
+    @Override
+    public int compare(Media m1, Media m2) {
+        int titleCompare = m1.getTitle().compareToIgnoreCase(m2.getTitle());
+
+        if (titleCompare != 0) {
+            return titleCompare;
+        }
+
+        if (m1 instanceof DigitalVideoDisc && m2 instanceof DigitalVideoDisc) {
+            DigitalVideoDisc dvd1 = (DigitalVideoDisc) m1;
+            DigitalVideoDisc dvd2 = (DigitalVideoDisc) m2;
+
+            int lengthCompare = Integer.compare(dvd2.getLength(), dvd1.getLength());
+
+            if (lengthCompare != 0) {
+                return lengthCompare;
+            }
+        }
+
+        return Float.compare(m1.getCost(), m2.getCost());
+    }
+}
+
+Cách dùng Comparator linh hoạt hơn Comparable vì có thể tạo nhiều quy tắc sắp xếp khác nhau mà không làm thay đổi class Media hoặc DigitalVideoDisc.
+
+
+Question 8: Why should equals() be overridden in Media and Track?
+
+Answer:
+Cần override equals() trong Media và Track vì các danh sách như ArrayList dùng contains() để kiểm tra object đã tồn tại hay chưa.
+Mà contains() lại dựa vào equals().
+
+Nếu không override equals(), Java sẽ dùng equals() mặc định của Object.
+Khi đó, hai object chỉ được xem là bằng nhau nếu chúng là cùng một vùng nhớ.
+
+Ví dụ:
+Media m1 = new Book("Clean Code", "Programming", 30.0f);
+Media m2 = new Book("Clean Code", "Programming", 30.0f);
+
+Nếu không override equals(), m1 và m2 bị xem là khác nhau vì chúng là hai object khác địa chỉ.
+Nhưng theo yêu cầu lab, hai Media có cùng title phải được xem là bằng nhau.
+
+Vì vậy, Media.equals() nên kiểm tra title:
+- Hai Media bằng nhau nếu title bằng nhau.
+
+Track.equals() nên kiểm tra title và length:
+- Hai Track bằng nhau nếu title bằng nhau và length bằng nhau.
+
+Nhờ đó:
+- Cart không thêm trùng Media.
+- Store không thêm trùng Media.
+- CompactDisc không thêm trùng Track.
+
+
+Question 9: Why is Comparator more suitable than Comparable in this lab?
+
+Answer:
+Comparator phù hợp hơn Comparable trong Lab04 vì bài yêu cầu nhiều cách sắp xếp khác nhau cho Media trong cart.
+
+Cụ thể:
+1. Sort by title:
+- Sắp xếp theo title alphabet.
+- Nếu title giống nhau, media có cost cao hơn đứng trước.
+
+2. Sort by cost:
+- Sắp xếp theo cost giảm dần.
+- Nếu cost giống nhau, sắp xếp theo title alphabet.
+
+Comparable chỉ cung cấp một quy tắc sắp xếp mặc định thông qua compareTo().
+Trong khi đó, Comparator cho phép tạo nhiều class so sánh khác nhau.
+
+Ví dụ:
+- MediaComparatorByTitleCost implements Comparator<Media>
+- MediaComparatorByCostTitle implements Comparator<Media>
+
+Vì vậy, dùng Comparator giúp code rõ ràng, dễ mở rộng và đúng yêu cầu của Lab04 hơn.
+
+
+Question 10: Explain the role of abstract class Media and interface Playable.
+
+Answer:
+Media là abstract class dùng để gom các thuộc tính và hành vi chung của các loại media.
+
+Các thuộc tính chung gồm:
+- id
+- title
+- category
+- cost
+
+Các class như Book, Disc, DigitalVideoDisc và CompactDisc kế thừa từ Media để tránh lặp code.
+
+Playable là interface dùng để biểu diễn những object có thể phát được.
+
+Các class implement Playable gồm:
+- DigitalVideoDisc
+- CompactDisc
+- Track
+
+Book không implement Playable vì sách không thể play.
+
+Nhờ Playable, chương trình có thể kiểm tra một media có phát được hay không:
+
+if (media instanceof Playable) {
+    ((Playable) media).play();
+}
+
+Cách thiết kế này giúp chương trình linh hoạt:
+- Media dùng cho đặc điểm chung.
+- Playable dùng cho khả năng phát.
+- Một class chỉ cần implement Playable nếu nó thật sự có hành vi play().
